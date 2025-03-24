@@ -23,8 +23,8 @@ A robust and scalable SMS Gateway API service that allows developers to send SMS
 
 1. Clone the repository
    ```bash
-   git clone https://github.com/yourusername/sms-gateway-api.git
-   cd sms-gateway-api
+   git clone https://github.com/ToxicBoyQx/sms-gateway.git
+   cd sms-gateway
    ```
 
 2. Install dependencies
