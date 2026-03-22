@@ -109,7 +109,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     </div>
                     <div class="card-footer py-3 bg-light text-center">
                         <div class="small">
-                            <a href="#" data-bs-toggle="modal" data-bs-target="#contactModal">Need help? Contact support</a>
+                            <a href="signup.php" class="text-decoration-none">Create Api Account.</a>
                         </div>
                     </div>
                 </div>
