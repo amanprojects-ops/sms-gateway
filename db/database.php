@@ -243,7 +243,7 @@ $seeds = [
     ('Enterprise', 50000, 499.99, 'Enterprise package with 50000 SMS messages')",
     
     "REPLACE INTO api_providers (id, name, api_url, api_key, method, success_keyword, is_active, is_backup, priority) VALUES
-    (1, 'APIHome', 'https://apihome.in/panel/api/bulksms/?key={api_key}&mobile={mobile}&otp={message_encoded}', 'YOUR API KEY', 'GET', '\"status\":\"Success\"', 1, 0, 1),
+    (1, 'APIHome', 'https://sms-api.amanprojects.com/panel/api/bulksms/?key={api_key}&mobile={mobile}&otp={message_encoded}', 'YOUR API KEY', 'GET', '\"status\":\"Success\"', 1, 0, 1),
     (2, 'Backup Provider', 'https://api.backupsms.com/v1/send', 'backup_api_key', 'GET', '', 1, 1, 2)"
 ];
 
