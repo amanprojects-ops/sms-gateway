@@ -43,14 +43,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Format phone number
     $phone = formatPhone($phone);
 
+    // Get the user's current SMS balance
+    $user_result = $conn->query("SELECT sms_balance FROM users WHERE id = $user_id");
+    $user = $user_result->fetch_assoc();
+    $current_balance = $user['sms_balance'];
+
+    // Check balance
+    if ($current_balance < $sms_parts) {
+        header('Content-Type: application/json');
+        echo json_encode(['success' => false, 'message' => "Insufficient balance. Required: $sms_parts, Available: $current_balance"]);
+        exit;
+    }
+
     // Send SMS
     $result = sendSMS($phone, $message, 'primary', $user_id);
     if ($result['success']) {
-        // Get the user's current SMS balance
-        $user_result = $conn->query("SELECT sms_balance FROM users WHERE id = $user_id");
-        $user = $user_result->fetch_assoc();
-        $current_balance = $user['sms_balance'];
-
         // Deduct SMS balance
         $new_balance = $current_balance - $sms_parts; // Assuming each SMS costs 1 credit
         updateUserSMSBalance($user_id, $new_balance); // Function to update the user's SMS balance

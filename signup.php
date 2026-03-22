@@ -51,7 +51,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $api_secret = bin2hex(random_bytes(16)); // 32 characters
             
             // Hash password
-            $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+            $hashed_password = md5($password);
             
             // Insert new user
             $insert_sql = "INSERT INTO users (username, password, email, full_name, role, api_key, api_secret, status, sms_balance) 

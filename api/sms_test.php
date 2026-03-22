@@ -33,8 +33,24 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         // Format phone number
         $phone = formatPhone($phone);
         
-        // Send SMS
-        $result = sendSMS($phone, $message,'primary',$user_id);
+        // Calculate parts
+        $sms_parts = calculateSMSParts($message);
+
+        // Check balance
+        if ($user['sms_balance'] < $sms_parts) {
+            $result = [
+                'success' => false,
+                'response' => "Insufficient balance. Required: $sms_parts, Available: {$user['sms_balance']}"
+            ];
+        } else {
+            // Send SMS
+            $result = sendSMS($phone, $message,'primary',$user_id);
+            if ($result['success']) {
+                $new_balance = $user['sms_balance'] - $sms_parts;
+                updateUserSMSBalance($user_id, $new_balance);
+                $user['sms_balance'] = $new_balance; // update local variable for UI
+            }
+        }
     }
 }
 ?>

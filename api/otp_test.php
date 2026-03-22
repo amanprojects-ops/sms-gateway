@@ -1,4 +1,5 @@
 <?php
+
 session_start();
 require_once '../config/database.php';
 require_once '../includes/functions.php';
@@ -31,30 +32,32 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         // Format phone number
         $phone = formatPhone($phone);
 
-        // Generate OTP
-        $success = generateOTP($phone);
+        $wallet_balance = getUserById($conn, $user_id);
+        $otp_cost = 1; // Cost of sending OTP
 
-        // Debit wallet balance
-        if ($success) {
-            $wallet_balance = getUserById($conn,$user_id); // Assuming a function to get wallet balance
-            $otp_cost = 1; // Cost of sending OTP
+        if ($wallet_balance['sms_balance'] >= $otp_cost) {
+            // Generate and send OTP
+            $success = generateOTP($phone);
 
-            if ($wallet_balance >= $otp_cost) {
-                updateUserSMSBalance($user_id, $wallet_balance['sms_balance'] - $otp_cost); // Assuming a function to deduct from wallet
+            // Debit wallet balance
+            if ($success) {
+                updateUserSMSBalance($user_id, $wallet_balance['sms_balance'] - $otp_cost);
+                
                 $result = [
                     'success' => true,
                     'message' => 'OTP sent successfully to ' . $phone . '. Check your phone for the code.'
                 ];
+                $user['sms_balance'] -= $otp_cost; // update local variable for UI
             } else {
                 $result = [
                     'success' => false,
-                    'message' => 'Insufficient wallet balance to send OTP.'
+                    'message' => 'Failed to send OTP. Please try again.'
                 ];
             }
         } else {
             $result = [
                 'success' => false,
-                'message' => 'Failed to send OTP. Please try again.'
+                'message' => 'Insufficient wallet balance to send OTP.'
             ];
         }
     }
@@ -186,6 +189,7 @@ if (isset($_POST['otp']) && isset($_POST['verify_phone'])) {
                                     <?php endif; ?>
 
                                     <form id="otpTestForm" method="post" action="">
+                                        <input type="hidden" id="apiKey" value="<?php echo $user['api_key']; ?>">
                                         <div class="mb-3">
                                             <label for="otpPhone" class="form-label">Phone Number</label>
                                             <div class="input-group">

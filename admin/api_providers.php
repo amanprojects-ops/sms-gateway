@@ -19,13 +19,17 @@
         $api_url = $_POST['api_url'];
         $api_key = $_POST['api_key'];
         $api_secret = $_POST['api_secret'];
+        $method = $_POST['method'] ?? 'GET';
+        $headers = $_POST['headers'] ?? '';
+        $post_data = $_POST['post_data'] ?? '';
+        $success_keyword = $_POST['success_keyword'] ?? '';
         $is_active = isset($_POST['is_active']) ? 1 : 0;
         $is_backup = isset($_POST['is_backup']) ? 1 : 0;
         $priority = (int)$_POST['priority'];
 
         // Insert new provider
-        $stmt = $conn->prepare("INSERT INTO api_providers (name, api_url, api_key, api_secret, is_active, is_backup, priority, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())");
-        $stmt->bind_param("ssssiis", $name, $api_url, $api_key, $api_secret, $is_active, $is_backup, $priority);
+        $stmt = $conn->prepare("INSERT INTO api_providers (name, api_url, api_key, api_secret, method, headers, post_data, success_keyword, is_active, is_backup, priority, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())");
+        $stmt->bind_param("ssssssssiii", $name, $api_url, $api_key, $api_secret, $method, $headers, $post_data, $success_keyword, $is_active, $is_backup, $priority);
 
         if ($stmt->execute()) {
             $message = displayMessage("New API provider added successfully");
@@ -42,13 +46,17 @@
         $api_url = $_POST['api_url'];
         $api_key = $_POST['api_key'];
         $api_secret = $_POST['api_secret'];
+        $method = $_POST['method'] ?? 'GET';
+        $headers = $_POST['headers'] ?? '';
+        $post_data = $_POST['post_data'] ?? '';
+        $success_keyword = $_POST['success_keyword'] ?? '';
         $is_active = isset($_POST['is_active']) ? 1 : 0;
         $is_backup = isset($_POST['is_backup']) ? 1 : 0;
         $priority = (int)$_POST['priority'];
         $success_rate = (float)$_POST['success_rate'];
 
-        $stmt = $conn->prepare("UPDATE api_providers SET name = ?, api_url = ?, api_key = ?, api_secret = ?, is_active = ?, is_backup = ?, priority = ?, success_rate = ? WHERE id = ?");
-        $stmt->bind_param("ssssiiddi", $name, $api_url, $api_key, $api_secret, $is_active, $is_backup, $priority, $success_rate, $id);
+        $stmt = $conn->prepare("UPDATE api_providers SET name = ?, api_url = ?, api_key = ?, api_secret = ?, method = ?, headers = ?, post_data = ?, success_keyword = ?, is_active = ?, is_backup = ?, priority = ?, success_rate = ? WHERE id = ?");
+        $stmt->bind_param("ssssssssiiidi", $name, $api_url, $api_key, $api_secret, $method, $headers, $post_data, $success_keyword, $is_active, $is_backup, $priority, $success_rate, $id);
 
         if ($stmt->execute()) {
             $message = displayMessage("API provider updated successfully");
@@ -202,6 +210,29 @@
                         </div>
                         
                         <div class="mb-3">
+                            <label for="method" class="form-label">HTTP Method</label>
+                            <select class="form-select" id="method" name="method">
+                                <option value="GET">GET</option>
+                                <option value="POST">POST (URL Encoded)</option>
+                                <option value="POST_JSON">POST (JSON)</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="headers" class="form-label">Headers (JSON format)</label>
+                            <input type="text" class="form-control" id="headers" name="headers" placeholder='e.g., {"Content-Type": "application/json"}'>
+                        </div>
+                        <div class="mb-3">
+                            <label for="post_data" class="form-label">POST Data Payload</label>
+                            <textarea class="form-control" id="post_data" name="post_data" rows="2" placeholder='e.g., {"api_key": "{api_key}", "to": "{mobile}", "msg": "{message_json}"}'></textarea>
+                            <small class="text-muted">Variables: {api_key}, {mobile}, {message}, {message_encoded}, {message_json}</small>
+                        </div>
+                        <div class="mb-3">
+                            <label for="success_keyword" class="form-label">Success Keyword</label>
+                            <input type="text" class="form-control" id="success_keyword" name="success_keyword" placeholder='e.g., "status":"success"'>
+                            <small class="text-muted">If matched in the response, considers sending successful.</small>
+                        </div>
+                        
+                        <div class="mb-3">
                             <div class="form-check form-switch">
                                 <input class="form-check-input" type="checkbox" id="is_active" name="is_active" checked>
                                 <label class="form-check-label" for="is_active">Active</label>
@@ -280,6 +311,10 @@
                                                             data-api-url="' . htmlspecialchars($row['api_url']) . '"
                                                             data-api-key="' . htmlspecialchars($row['api_key']) . '"
                                                             data-api-secret="' . htmlspecialchars($row['api_secret']) . '"
+                                                            data-method="' . htmlspecialchars($row['method']) . '"
+                                                            data-headers="' . htmlspecialchars($row['headers']) . '"
+                                                            data-post-data="' . htmlspecialchars($row['post_data']) . '"
+                                                            data-success-keyword="' . htmlspecialchars($row['success_keyword']) . '"
                                                             data-is-active="' . $row['is_active'] . '"
                                                             data-is-backup="' . $row['is_backup'] . '"
                                                             data-priority="' . $row['priority'] . '"
@@ -341,6 +376,10 @@
                                                             data-api-url="' . htmlspecialchars($row['api_url']) . '"
                                                             data-api-key="' . htmlspecialchars($row['api_key']) . '"
                                                             data-api-secret="' . htmlspecialchars($row['api_secret']) . '"
+                                                            data-method="' . htmlspecialchars($row['method']) . '"
+                                                            data-headers="' . htmlspecialchars($row['headers']) . '"
+                                                            data-post-data="' . htmlspecialchars($row['post_data']) . '"
+                                                            data-success-keyword="' . htmlspecialchars($row['success_keyword']) . '"
                                                             data-is-active="' . $row['is_active'] . '"
                                                             data-is-backup="' . $row['is_backup'] . '"
                                                             data-priority="' . $row['priority'] . '"
@@ -415,6 +454,27 @@
                             </div>
                             
                             <div class="mb-3">
+                                <label for="edit_method" class="form-label">HTTP Method</label>
+                                <select class="form-select" id="edit_method" name="method">
+                                    <option value="GET">GET</option>
+                                    <option value="POST">POST (URL Encoded)</option>
+                                    <option value="POST_JSON">POST (JSON)</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="edit_headers" class="form-label">Headers (JSON format)</label>
+                                <input type="text" class="form-control" id="edit_headers" name="headers" placeholder='e.g., {"Content-Type": "application/json"}'>
+                            </div>
+                            <div class="mb-3">
+                                <label for="edit_post_data" class="form-label">POST Data Payload</label>
+                                <textarea class="form-control" id="edit_post_data" name="post_data" rows="2" placeholder='e.g., {"api_key": "{api_key}", "to": "{mobile}", "msg": "{message_json}"}'></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label for="edit_success_keyword" class="form-label">Success Keyword</label>
+                                <input type="text" class="form-control" id="edit_success_keyword" name="success_keyword">
+                            </div>
+                            
+                            <div class="mb-3">
                                 <div class="form-check form-switch">
                                     <input class="form-check-input" type="checkbox" id="edit_is_active" name="is_active">
                                     <label class="form-check-label" for="edit_is_active">Active</label>
@@ -451,6 +511,10 @@
                 const apiUrl = this.getAttribute('data-api-url');
                 const apiKey = this.getAttribute('data-api-key');
                 const apiSecret = this.getAttribute('data-api-secret');
+                const method = this.getAttribute('data-method');
+                const headers = this.getAttribute('data-headers');
+                const postData = this.getAttribute('data-post-data');
+                const successKeyword = this.getAttribute('data-success-keyword');
                 const isActive = this.getAttribute('data-is-active') === '1';
                 const isBackup = this.getAttribute('data-is-backup') === '1';
                 const priority = this.getAttribute('data-priority');
@@ -461,6 +525,10 @@
                 document.getElementById('edit_api_url').value = apiUrl;
                 document.getElementById('edit_api_key').value = apiKey;
                 document.getElementById('edit_api_secret').value = apiSecret;
+                document.getElementById('edit_method').value = method || 'GET';
+                document.getElementById('edit_headers').value = headers;
+                document.getElementById('edit_post_data').value = postData;
+                document.getElementById('edit_success_keyword').value = successKeyword;
                 document.getElementById('edit_is_active').checked = isActive;
                 document.getElementById('edit_is_backup').checked = isBackup;
                 document.getElementById('edit_priority').value = priority;

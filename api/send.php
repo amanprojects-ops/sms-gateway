@@ -103,7 +103,7 @@ if (!formatPhone($mobile)) {
 }
 
 // Check SMS balance
-if ($sms_balance <= 100) {
+if ($sms_balance <= 0) {
     http_response_code(402);
     echo json_encode([
         "success" => false,
@@ -134,7 +134,7 @@ if ($user['api_key'] == $api_key) {
         if ($response['success']) {
             updateLastSMSTime($user['id'], $mobile); // Function to update the last SMS time for the number
             // Deduct SMS balance
-            $new_balance = $user['sms_balance'] - 1; // Assuming each SMS costs 1 credit
+            $new_balance = $user['sms_balance'] - $sms_parts;
             updateUserSMSBalance($user['id'], $new_balance); // Function to update the user's SMS balance
         }
         echo json_encode($response);

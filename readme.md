@@ -22,23 +22,27 @@ A robust and scalable SMS Gateway API service that allows developers to send SMS
 ### Installation
 
 1. Clone the repository
+
    ```bash
-   git clone https://github.com/ToxicBoyQx/sms-gateway.git
+   git clone https://github.com/amanprojects-ops/sms-gateway.git
    cd sms-gateway
    ```
 
 2. Install dependencies
+
    ```bash
    composer install
    ```
 
 3. Configure your database
+
    ```bash
    cp config/database.example.php config/database.php
    # Edit database.php with your database credentials
    ```
 
 4. Import the database schema
+
    ```bash
    mysql -u username -p database_name < database/schema.sql
    ```
@@ -53,8 +57,3 @@ A robust and scalable SMS Gateway API service that allows developers to send SMS
 ### Authentication
 
 All API requests require an API key which should be included in the header:
-
-
-
-
-

@@ -18,6 +18,21 @@ function isAdmin()
 // Secure redirect
 function redirect($url)
 {
+    // If it's a relative path (doesn't start with http or /), prepend BASE_URL
+    if (!preg_match('/^https?:\/\//', $url)) {
+        $base = rtrim(BASE_URL, '/');
+        $path = ltrim($url, '/');
+        
+        // Handle parent directory relative paths (../../)
+        if (strpos($path, '..') === 0) {
+            // This is a bit complex to resolve perfectly in all environments, 
+            // but for this project's structure, standardizing to absolute paths is safer.
+            // For now, let's keep it simple: if it contains .., we'll let the browser handle it
+            // or we could resolve it. Most redirects here are simple.
+        } else {
+            $url = $base . '/' . $path;
+        }
+    }
     header("Location: $url");
     exit;
 }
@@ -75,6 +90,10 @@ function sendSMS($phone, $message, $api_provider = 'primary', $user_id)
     $api_pro_name = $sms_provider['name'];
     $api_pro_key = $sms_provider['api_key'];
     $api_pro_status = $sms_provider['is_active'];
+    $api_method = $sms_provider['method'] ?? 'GET';
+    $api_headers = $sms_provider['headers'] ?? '';
+    $api_post_data = $sms_provider['post_data'] ?? '';
+    $success_keyword = $sms_provider['success_keyword'] ?? '';
 
     // Validate the message and phone number
     if (empty($message) || !preg_match('/^\+?[1-9]\d{1,14}$/', $phone)) {
@@ -84,25 +103,98 @@ function sendSMS($phone, $message, $api_provider = 'primary', $user_id)
         ];
     }
 
-    $msg = urlencode($message);
-    $api_url = str_replace(['{api_key}', '{mobile}', '{message}'], [$api_pro_key, $phone, $msg], $api_pro_url);
+    // Prepare replacements for dynamic mapping
+    $msg_encoded = urlencode($message);
+    $safe_msg_json = str_replace(
+        ['\\', '"', "\n", "\r", "\t"], 
+        ['\\\\', '\"', '\n', '\r', '\t'], 
+        $message
+    );
+    
+    $replacements = [
+        '{api_key}' => $api_pro_key, 
+        '{mobile}' => $phone, 
+        '{message}' => $message,
+        '{message_encoded}' => $msg_encoded,
+        '{message_json}' => $safe_msg_json
+    ];
+    $search_keys = array_keys($replacements);
+    $replace_vals = array_values($replacements);
 
+    $api_url = str_replace($search_keys, $replace_vals, $api_pro_url);
+    $api_url = str_replace(' ', '%20', $api_url);
+  
     // Check API status and send the message
     if ($api_pro_status) {
-        $response = file_get_contents($api_url);
-        $res = json_decode($response, true);
-        $success = isset($res['status']);
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $api_url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+        
+        // Setup Headers
+        $headers_array = [];
+        if (!empty($api_headers)) {
+            $parsed_headers_str = str_replace($search_keys, $replace_vals, $api_headers);
+            $parsed_headers = json_decode($parsed_headers_str, true);
+            if (is_array($parsed_headers)) {
+                foreach ($parsed_headers as $k => $v) {
+                    $headers_array[] = trim($k) . ': ' . trim($v);
+                }
+            }
+        }
+         
+        // Setup Request Method and Body
+        if ($api_method === 'POST') {
+            curl_setopt($ch, CURLOPT_POST, true);
+            $payload = str_replace($search_keys, $replace_vals, $api_post_data);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
+            
+            // Auto add content type if not set
+            if (stripos($api_headers, 'content-type') === false) {
+                $headers_array[] = 'Content-Type: application/x-www-form-urlencoded';
+            }
+        } elseif ($api_method === 'POST_JSON') {
+            curl_setopt($ch, CURLOPT_POST, true);
+            $payload = str_replace($search_keys, $replace_vals, $api_post_data);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
+            
+            if (stripos($api_headers, 'content-type') === false) {
+                $headers_array[] = 'Content-Type: application/json';
+            }
+        }
+        
+        if (!empty($headers_array)) {
+            curl_setopt($ch, CURLOPT_HTTPHEADER, $headers_array);
+        }
+
+        $response = curl_exec($ch);
+        $httpcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $err = curl_error($ch);
+        curl_close($ch);
+
+        if ($response === false) {
+            $success = false;
+            $response = "cURL Error: " . $err;
+        } else {
+            if (!empty($success_keyword)) {
+                $success = (strpos($response, $success_keyword) !== false);
+            } else {
+                $res = json_decode($response, true);
+                $success = isset($res['status']) || ($httpcode >= 200 && $httpcode < 300);
+            }
+        }
 
         // Log the SMS
         logAPISMS($phone, $message, $api_pro_name, $success, $response, $user_id);
-        logSMS($phone, $message, $api_provider, $api_pro_name, $success, $success ? "Message sent successfully" : "Failed to send message",$user_id);
+        logSMS($phone, $message, $api_provider, $api_pro_name, $success, $response, $user_id);
     } else {
         $success = false;
+        $response = 'Provider is inactive';
     }
 
     return [
         'success' => $success,
-        'response' => $success ? "Message sent successfully" : "Failed to send message"
+        'response' => $response
     ];
 }
 
@@ -131,11 +223,12 @@ function logSMS($phone, $message, $provider, $provider_name, $success, $response
     $phone = cleanInput($phone);
     $message = cleanInput($message);
     $provider = cleanInput($provider);
+    $provider_name = cleanInput($provider_name);
     $response = cleanInput($response);
-    $user_id = $user_id;
+    $user_id = (int)$user_id;
     $success = $success ? 1 : 0;
 
-    $sql = "INSERT INTO sms_logs (user_id, phone, message, provider, provider_name, status, response, created_at) 
+    $sql = "INSERT INTO sms_logs (user_id, phone, message, provider, provider_name, status, response, sent_at) 
             VALUES ('$user_id', '$phone', '$message', '$provider', '$provider_name', '$success', '$response', NOW())";
 
     $conn->query($sql);
@@ -230,12 +323,14 @@ function validateOTP($phone, $otp)
     $phone = cleanInput($phone);
     $otp = cleanInput($otp);
 
-    $sql = "SELECT * FROM otp_codes WHERE phone = '$phone' AND otp = '$otp' AND created_at > DATE_SUB(NOW(), INTERVAL 10 MINUTE) AND used = 0";
+    $sql = "SELECT * FROM otp_codes WHERE phone_number = '$phone' AND code = '$otp' AND expires_at > NOW() AND verified = 0";
     $result = $conn->query($sql);
 
     if ($result && $result->num_rows > 0) {
+        $row = $result->fetch_assoc();
+        $id = $row['id'];
         // Mark OTP as used
-        $sql = "UPDATE otp_codes SET used = 1 WHERE phone = '$phone' AND otp = '$otp'";
+        $sql = "UPDATE otp_codes SET verified = 1, verified_at = NOW() WHERE id = '$id'";
         $conn->query($sql);
         return true;
     }
@@ -260,10 +355,15 @@ function generateOTP($phone)
     
     // Generate a 6-digit OTP
     $otp = sprintf("%06d", mt_rand(0, 999999));
+    $user_id = $_SESSION['user_id'] ?? 0;
+    
+    // Set expiry (10 mins)
+    $expires_at = date('Y-m-d H:i:s', strtotime('+10 minutes'));
+    $reference_id = 'otp_' . uniqid();
 
     // Prepare SQL statement to prevent SQL injection
-    $stmt = $conn->prepare("INSERT INTO otp_codes (phone, otp, created_at) VALUES (?, ?, NOW())");
-    $stmt->bind_param("ss", $phone, $otp);
+    $stmt = $conn->prepare("INSERT INTO otp_codes (id, user_id, phone_number, code, expires_at, created_at, verified) VALUES (?, ?, ?, ?, ?, NOW(), 0)");
+    $stmt->bind_param("sisss", $reference_id, $user_id, $phone, $otp, $expires_at);
     
     // Execute the statement and check for success
     if (!$stmt->execute()) {
@@ -338,7 +438,7 @@ function getUserById($conn, $userId)
  * Get Sms Provider is primary
  * 
  * @param object $conn Database Connection 
- * @param Provider Call Type : primary[0] or backup[1]
+ * @param int $backup Call Type : primary[0] or backup[1]
  * @return array|false SMS Provider data or false if not found
  */
 function getSmsProvider($conn, $backup = 0)

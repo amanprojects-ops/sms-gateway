@@ -111,16 +111,17 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 // Get form data
                 const phone = document.getElementById('otpPhone').value;
+                const apiKey = document.getElementById('apiKey').value;
 
                 // Send AJAX request to generate OTP
-                fetch('api/generate_otp.php', {
+                fetch('generate_otp.php', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                        'X-API-Key': '3c8a5f96798b0b9769da0cb6d86f22c8',
+                        'Content-Type': 'application/json',
+                        'X-API-Key': apiKey,
                         'X-Requested-With': 'XMLHttpRequest',
                     },
-                    body: `phone=${encodeURIComponent(phone)}`
+                    body: JSON.stringify({ phone: phone })
                 })
                     .then(response => {
                         // Check if response is ok
@@ -160,12 +161,13 @@ document.addEventListener('DOMContentLoaded', function () {
                                 const otp = document.getElementById('otpCode').value;
 
                                 // Send AJAX request to verify OTP
-                                fetch('api/verify_otp.php', {
+                                fetch('verify_otp.php', {
                                     method: 'POST',
                                     headers: {
-                                        'Content-Type': 'application/x-www-form-urlencoded',
+                                        'Content-Type': 'application/json',
+                                        'X-API-Key': apiKey,
                                     },
-                                    body: `phone=${encodeURIComponent(phone)}&otp=${encodeURIComponent(otp)}`
+                                    body: JSON.stringify({ phone: phone, otp: otp })
                                 })
                                     .then(response => {
                                         if (!response.ok) {

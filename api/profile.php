@@ -66,7 +66,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
     $confirm_password = $_POST['confirm_password'];
     
     // Verify current password
-    if (!password_verify($current_password, $user['password'])) {
+    if (md5($current_password) !== $user['password']) {
         $message = 'Current password is incorrect';
         $message_type = 'danger';
     } else if (strlen($new_password) < 8) {
@@ -77,7 +77,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
         $message_type = 'danger';
     } else {
         // Hash the new password and update
-        $hashed_password = password_hash($new_password, PASSWORD_DEFAULT);
+        $hashed_password = md5($new_password);
         $update_query = "UPDATE users SET password = '$hashed_password', updated_at = NOW() WHERE id = $user_id";
         
         if ($conn->query($update_query)) {
@@ -248,22 +248,22 @@ $transactions_result = $conn->query($transactions_query);
                                     <div class="row">
                                         <div class="col-md-6 mb-3">
                                             <label for="name" class="form-label">Full Name</label>
-                                            <input type="text" class="form-control" id="name" name="name" value="<?php echo htmlspecialchars($user['full_name']); ?>" required>
+                                            <input type="text" class="form-control" id="name" name="name" value="<?php echo htmlspecialchars($user['full_name'] ?? ''); ?>" required>
                                         </div>
                                         <div class="col-md-6 mb-3">
                                             <label for="email" class="form-label">Email Address</label>
-                                            <input type="email" class="form-control" id="email" name="email" value="<?php echo htmlspecialchars($user['email']); ?>" required>
+                                            <input type="email" class="form-control" id="email" name="email" value="<?php echo htmlspecialchars($user['email'] ?? ''); ?>" required>
                                         </div>
                                     </div>
                                     
                                     <div class="row">
                                         <div class="col-md-6 mb-3">
                                             <label for="company" class="form-label">Company Name</label>
-                                            <input type="text" class="form-control" id="company" name="company" value="<?php echo htmlspecialchars($user['company']); ?>">
+                                            <input type="text" class="form-control" id="company" name="company" value="<?php echo htmlspecialchars($user['company'] ?? ''); ?>">
                                         </div>
                                         <div class="col-md-6 mb-3">
                                             <label for="phone" class="form-label">Phone Number</label>
-                                            <input type="text" class="form-control" id="phone" name="phone" value="<?php echo htmlspecialchars($user['phone']); ?>">
+                                            <input type="text" class="form-control" id="phone" name="phone" value="<?php echo htmlspecialchars($user['phone'] ?? ''); ?>">
                                         </div>
                                     </div>
                                     

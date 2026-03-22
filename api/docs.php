@@ -138,7 +138,7 @@ if (!isAdmin()) {
                                             </p>
                                             <div class="alert alert-info">
                                                 <i class="fas fa-info-circle me-2"></i>
-                                                <strong>Base URL:</strong> <code>https://<?php echo $_SERVER['HTTP_HOST']; ?>/api/</code>
+                                                <strong>Base URL:</strong> <code><?= BASE_URL ?></code>
                                             </div>
                                         </div>
 
@@ -204,7 +204,7 @@ if (!isAdmin()) {
                                             <h5 class="mt-4">1. Using Request Headers (Recommended)</h5>
                                             <div class="doc-code">
                                                 <pre><code class="language-http">POST /api/send.php HTTP/1.1
-                                                Host: <?php echo $_SERVER['HTTP_HOST']; ?>
+                                                Host: <?php echo BASE_URL ?>
                                                 Content-Type: application/json
                                                 X-API-Key: your_api_key_here
                                                 </code></pre>
@@ -213,7 +213,7 @@ if (!isAdmin()) {
                                             <h5 class="mt-4">2. Using Request Parameters</h5>
                                             <div class="doc-code">
                                                 <pre><code class="language-http">POST /api/send.php?api_key=your_api_key_here HTTP/1.1
-                                                Host: <?php echo $_SERVER['HTTP_HOST']; ?>
+                                                Host: <?= BASE_URL ?>
                                                 Content-Type: application/json
                                                 </code></pre>
                                             </div>
@@ -252,7 +252,7 @@ if (!isAdmin()) {
 
                                             <h5 class="mt-4">Endpoint</h5>
                                             <div class="doc-code">
-                                                <pre><code class="language-http">POST https://<?php echo $_SERVER['HTTP_HOST']; ?>/api/send.php</code></pre>
+                                                <pre><code class="language-http">POST <?= BASE_URL ?>/send.php</code></pre>
                                             </div>
 
                                             <h5 class="mt-4">Request Parameters</h5>
@@ -329,7 +329,7 @@ if (!isAdmin()) {
                                                 <div class="tab-pane fade show active" id="code-php" role="tabpanel" aria-labelledby="code-php-tab">
                                                     <div class="doc-code">
                                                         <pre><code class="language-php">&lt;?php
-$url = 'https://<?php echo $_SERVER['HTTP_HOST']; ?>/api/send.php';
+$url = '<?= BASE_URL ?>/send.php';
 $data = [
     'phone' => '+1234567890',
     'message' => 'Hello, this is a test message from SMS Gateway!'
@@ -358,7 +358,7 @@ if ($response['success']) {
                                                 <div class="tab-pane fade" id="code-js" role="tabpanel" aria-labelledby="code-js-tab">
                                                     <div class="doc-code">
                                                         <pre><code class="language-javascript">// Using fetch API
-fetch('https://<?php echo $_SERVER['HTTP_HOST']; ?>/api/send.php', {
+fetch('<?= BASE_URL ?>/send.php', {
     method: 'POST',
     headers: {
         'Content-Type': 'application/json',
@@ -387,7 +387,7 @@ fetch('https://<?php echo $_SERVER['HTTP_HOST']; ?>/api/send.php', {
                                                         <pre><code class="language-python">import requests
 import json
 
-url = "https://<?php echo $_SERVER['HTTP_HOST']; ?>/api/send.php"
+url = "<?= BASE_URL ?>/send.php"
 headers = {
     "Content-Type": "application/json",
     "X-API-Key": "YOUR_API_KEY"
@@ -423,7 +423,7 @@ else:
 
                                             <h5 class="mt-4">Endpoint</h5>
                                             <div class="doc-code">
-                                                <pre><code class="language-http">POST https://<?php echo $_SERVER['HTTP_HOST']; ?>/api/generate_otp.php</code></pre>
+                                                <pre><code class="language-http">POST <?= BASE_URL ?>/generate_otp.php</code></pre>
                                             </div>
 
                                             <h5 class="mt-4">Request Parameters</h5>
@@ -476,7 +476,7 @@ else:
 
                                             <h5 class="mt-4">Endpoint</h5>
                                             <div class="doc-code">
-                                                <pre><code class="language-http">POST https://<?php echo $_SERVER['HTTP_HOST']; ?>/api/verify_otp.php</code></pre>
+                                                <pre><code class="language-http">POST <?= BASE_URL ?>/verify_otp.php</code></pre>
                                             </div>
 
                                             <h5 class="mt-4">Request Parameters</h5>
